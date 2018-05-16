@@ -1,0 +1,39 @@
+<html>
+<head><title> OpenFDA</title>
+</head>
+
+<body>
+
+    <h1>OpenFDA MENU</h1>
+		<form method="get" action="listDrugs">
+		    
+			Limit: <input type="text" name="limit"  value=10> <br>
+			<input type="submit" value="listDrugs">
+		</form>
+		
+		<form method="get" action="searchDrug">
+			Drug name: <input type="text" name="active_ingredient"> <br>
+            Limit: <input type="text" name="limit"> <br>
+			<input type="submit" value="searchDrug">
+		</form>
+	
+		<form method="get" action="listCompanies">
+			<input type="submit" value="listCompanies">
+			Limit: <input type="text" name="limit"  value=10>
+		</form>
+		<form method="get" action="searchCompany">
+			Company name: <input type="text" name="company">
+			Limit: <input type="text" name="limit">
+			<input type="submit" value="searchCompany">
+		</form>
+		<form method="get" action="listWarnings">
+			<input type="submit" value="listWarnings">
+			Limit: <input type="text" name="limit"  value=10>
+		</form>
+	
+
+
+
+</body>
+
+</html>

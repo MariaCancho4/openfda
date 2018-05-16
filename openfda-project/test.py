@@ -27,8 +27,6 @@ import unittest
 
 import requests
 
-
-
 from html.parser import HTMLParser
 
 PYTHON_CMD = os.path.abspath(sys.executable)
