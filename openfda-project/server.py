@@ -1,7 +1,8 @@
 """
-OPENFDA FINAL-PROJECT
+OPENFDA FINAL PROJECT
 
-In this code, it's the project and all the extensions.
+Description:
+	It covers the whole project with all the extensions.
 
 """
 
@@ -17,14 +18,13 @@ socketserver.TCPServer.allow_reuse_address = True
 PORT = 8000
 IP = "localhost"
 
+
 # EXTENSION III: include the logic to communicate with the OpenFDA remote API.
 class OpenFDAClient():
 
     def set_arguments(self, params):
 
         headers = {'User-Agent': 'http-client'}
-
-        # make a connection to the HTTPS client (api.fda.gov doesn't allow http so we must use HTTPS)
         con = http.client.HTTPSConnection("api.fda.gov")
 
         query_url = "/drug/label.json"
@@ -40,24 +40,27 @@ class OpenFDAClient():
         data = response.read().decode("utf-8")
         con.close()
 
+        # parse json response
         result = json.loads(data)
-        return result['results'] if 'results' in result else []
-            
-        
+        if 'results' in result:
+            items = result['results']
+        else:
+            items = []
 
         
 
     def search_drugs(self, active_ingredient, limit=10):
 
-        params = 'search=active_ingredient:"{}"'.format(active_ingredient)
+        params = 'search=active_ingredient:"%s"'%(active_ingredient)
         
         if limit: 
             params += "&limit=" + str(limit)
         drugs = self.set_arguments(params) 
-        return drugs['results'] if 'results' in drugs else []
+        return drugs
 
+		
     def search_companies_info(self, company_name, limit=10):
-
+   
         params = 'search=openfda.manufacturer_name:"%s"' % company_name
         if limit:
             params += "&limit=" + str(limit)
@@ -68,7 +71,6 @@ class OpenFDAClient():
 
 
     def list_drugs(self, limit=10):
-
 
         params = "limit=" + str(limit)
 
@@ -102,19 +104,16 @@ class OpenFDAParser():
         companies_info = []
         for drug in drugs:
             if 'openfda' in drug and 'manufacturer_name' in drug['openfda']:
-                companies_info.append(drug['openfda']['manufacturer_name'][0])
+                companies_info.append(drug['id']+ " " +drug['openfda']['manufacturer_name'][0])
             else:
                 companies_info.append("Unknown")
-
-            companies_info.append(drug['id'])
 
         return companies_info
 
     # EXTENSION I: list warnings
     def parse_warnings(self, drugs):
-
+	
         warnings = []
-
         for drug in drugs:
             if 'warnings' in drug and drug['warnings']:
                 warnings.append(drug['warnings'][0])
@@ -126,9 +125,10 @@ class OpenFDAParser():
 # EXTENSION III: includes the logic to the HTML visualization.
 class OpenFDAHTML():
 
-    def build_html_list(self, result):
+    def build_html_list(self, items):
+
         html_list = "<ul>"
-        for item in result:
+        for item in items:
             html_list += "<li>" + item + "</li>"
         html_list += "</ul>"
 
@@ -137,8 +137,8 @@ class OpenFDAHTML():
     # EXTENSION II: 404 PAGE
     def show_page_not_found(self):
         with open("page_not_found.html") as html_file:
-            return html_file.read()
-
+            html = html_file.read()
+        return html
         
 
 # Refactored HTTPRequestHandler class
@@ -147,25 +147,25 @@ class testHTTPRequestHandler(http.server.BaseHTTPRequestHandler):
     # Handle all the GET Requests
     def do_GET(self):
 
+        # initialize the classes objects
         client = OpenFDAClient()
         html_builder = OpenFDAHTML()
         json_parser = OpenFDAParser()
 
         
-        # generic response for any urls except the defined one
-        response_code = 404
-        response = html_builder.show_page_not_found()
+        response_code = 200
+        response = "<h1>Not supported</h1>"
 
         if self.path == "/":
             # Return home page
             with open("index.html") as f:
                 response = f.read()        
-        
-        if 'searchDrug' in self.path:
+				
+        elif 'searchDrug' in self.path:
             active_ingredient = None
             limit = 10
-            params = self.path.split("?")[1].split("&")
-            for param in params:
+            paramet = self.path.split("?")[1].split("&")
+            for param in paramet:
                 param_name = param.split("=")[0]
                 param_value = param.split("=")[1]
                 if param_name == 'active_ingredient':
@@ -185,8 +185,8 @@ class testHTTPRequestHandler(http.server.BaseHTTPRequestHandler):
         elif 'searchCompany' in self.path:
             company_name = None
             limit = 10
-            params = self.path.split("?")[1].split("&")
-            for param in params:
+            paramet = self.path.split("?")[1].split("&")
+            for param in paramet:
                 param_name = param.split("=")[0]
                 param_value = param.split("=")[1]
                 if param_name == 'company':
@@ -213,7 +213,7 @@ class testHTTPRequestHandler(http.server.BaseHTTPRequestHandler):
         
         
         # Extension IV: Redirect and Authentication
-        if 'secret' in self.path:
+        elif 'secret' in self.path:
             # set response code
             response_code = 401
             # send additonal header
@@ -223,6 +223,8 @@ class testHTTPRequestHandler(http.server.BaseHTTPRequestHandler):
             response_code = 302
             # send redirect headers
             self.send_header('Location', 'http://localhost:8000/')
+        else:
+            response_code = 404
 
         # Send response status code
         self.send_response(response_code)
@@ -239,4 +241,4 @@ Handler = testHTTPRequestHandler
 
 httpd = socketserver.TCPServer((IP, PORT), Handler)
 print("serving at port", PORT)
-httpd.serve_forever()
+httpd.serve_forever
